@@ -141,6 +141,9 @@ func renderOVNKubernetes(conf *operv1.NetworkSpec, bootstrapResult *bootstrap.Bo
 	data.Data["RoutableMTU"] = nil
 	data.Data["V4JoinSubnet"] = c.V4InternalSubnet
 	data.Data["V6JoinSubnet"] = c.V6InternalSubnet
+	data.Data["V4InternalMasqueradeSubnet"] = c.V4InternalMasqueradeSubnet
+	data.Data["V6InternalMasqueradeSubnet"] = c.V6InternalMasqueradeSubnet
+	//v4 and v6InternalMasqueradeSubnet are used when the user wants to use the addresses that we reserve in ovn-k for ip masquerading
 	data.Data["EnableUDPAggregation"] = !bootstrapResult.OVN.OVNKubernetesConfig.DisableUDPAggregation
 
 	if conf.Migration != nil && conf.Migration.MTU != nil {
