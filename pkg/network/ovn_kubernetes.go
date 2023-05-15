@@ -904,7 +904,7 @@ func validateOVNKubernetes(conf *operv1.NetworkSpec) []error {
 		var err error
 		if oc.V4InternalSubnet != "" {
 			if !cnHasIPv4 {
-				out = append(out, errors.Errorf("v4InternalSubnet and ClusterNetwork must have matching IP families"))
+				out = append(out, errors.Errorf("v4InternalSubnet %v and ClusterNetwork must have matching IP families"))
 			}
 			_, v4Net, err = net.ParseCIDR(oc.V4InternalSubnet)
 			if err != nil {
@@ -962,7 +962,7 @@ func validateOVNKubernetes(conf *operv1.NetworkSpec) []error {
 		}
 		if oc.V4InternalMasqueradeSubnet != "" {
 			if !cnHasIPv4 {
-				out = append(out, errors.Errorf("v4InternalMasqueradeSubnet and ClusterNetwork must have matching IP families"))
+				out = append(out, errors.Errorf("v4InternalMasqueradeSubnet %v and ClusterNetwork must have matching IP families", oc.V4InternalMasqueradeSubnet))
 			}
 			_, v4Net, err = net.ParseCIDR(oc.V4InternalMasqueradeSubnet)
 			if err != nil {
@@ -970,10 +970,10 @@ func validateOVNKubernetes(conf *operv1.NetworkSpec) []error {
 			}
 		}
 		if oc.V6InternalMasqueradeSubnet != "" {
-			if !cnHasIPv4 {
-				out = append(out, errors.Errorf("v6InternalMasqueradeSubnet and ClusterNetwork must have matching IP families"))
+			if !cnHasIPv6 {
+				out = append(out, errors.Errorf("v6InternalMasqueradeSubnet %v and ClusterNetwork must have matching IP families", oc.v6InternalMasqueradeSubnet))
 			}
-			_, v4Net, err = net.ParseCIDR(oc.V6InternalMasqueradeSubnet)
+			_, v6Net, err = net.ParseCIDR(oc.V6InternalMasqueradeSubnet)
 			if err != nil {
 				out = append(out, errors.Errorf("v6InternalMasqueradeSubnet is invalid: %s", err))
 			}
@@ -983,14 +983,14 @@ func validateOVNKubernetes(conf *operv1.NetworkSpec) []error {
 				if oc.V6InternalMasqueradeSubnet != "" {
 					_, v6ClusterNet, _ := net.ParseCIDR(cn.CIDR)
 					if iputil.NetsOverlap(*v6Net, *v6ClusterNet) {
-						out = append(out, errors.Errorf("v6InternalMasqueradeSubnet overlaps with ClusterNetwork %s", cn.CIDR))
+						out = append(out, errors.Errorf("v6InternalMasqueradeSubnet %v overlaps with ClusterNetwork %s", cn.CIDR, oc.v6InternalMasqueradeSubnet))
 					}
 				}
 			} else {
 				if oc.V4InternalMasqueradeSubnet != "" {
 					_, v4ClusterNet, _ := net.ParseCIDR(cn.CIDR)
 					if iputil.NetsOverlap(*v4Net, *v4ClusterNet) {
-						out = append(out, errors.Errorf("v4InternalMasqueradeSubnet overlaps with ClusterNetwork %s", cn.CIDR))
+						out = append(out, errors.Errorf("v4InternalMasqueradeSubnet overlaps with ClusterNetwork %s", cn.CIDR, oc.v6InternalMasqueradeSubnet))
 					}
 				}
 			}
@@ -1000,14 +1000,14 @@ func validateOVNKubernetes(conf *operv1.NetworkSpec) []error {
 				if oc.V6InternalMasqueradeSubnet != "" {
 					_, v6ServiceNet, _ := net.ParseCIDR(sn)
 					if iputil.NetsOverlap(*v6Net, *v6ServiceNet) {
-						out = append(out, errors.Errorf("v6InternalMasqueradeSubnet overlaps with ServiceNetwork %s", sn))
+						out = append(out, errors.Errorf("v6InternalMasqueradeSubnet %v overlaps with ServiceNetwork %s", sn, oc.v6InternalMasqueradeSubnet))
 					}
 				}
 			} else {
 				if oc.V4InternalMasqueradeSubnet != "" {
 					_, v4ServiceNet, _ := net.ParseCIDR(sn)
 					if iputil.NetsOverlap(*v4Net, *v4ServiceNet) {
-						out = append(out, errors.Errorf("v4InternalMasqueradeSubnet overlaps with ServiceNetwork %s", sn))
+						out = append(out, errors.Errorf("v4InternalMasqueradeSubnet %v overlaps with ServiceNetwork %s", sn, oc.v4InternalMasqueradeSubnet))
 					}
 				}
 			}

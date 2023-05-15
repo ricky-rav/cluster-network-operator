@@ -171,16 +171,17 @@ func TestRenderOVNKubernetesIPv6(t *testing.T) {
 
 func TestRenderedOVNKubernetesConfig(t *testing.T) {
 	type testcase struct {
-		desc                   string
-		expected               string
-		hybridOverlayConfig    *operv1.HybridOverlayConfig
-		gatewayConfig          *operv1.GatewayConfig
-		egressIPConfig         *operv1.EgressIPConfig
-		masterIPs              []string
-		v4InternalSubnet       string
-		disableGRO             bool
-		disableMultiNet        bool
-		enableMultiNetPolicies bool
+		desc                       string
+		expected                   string
+		hybridOverlayConfig        *operv1.HybridOverlayConfig
+		gatewayConfig              *operv1.GatewayConfig
+		egressIPConfig             *operv1.EgressIPConfig
+		masterIPs                  []string
+		v4InternalSubnet           string
+		v4InternalMasqueradeSubnet string
+		disableGRO                 bool
+		disableMultiNet            bool
+		enableMultiNetPolicies     bool
 	}
 	testcases := []testcase{
 		{
@@ -256,6 +257,9 @@ v4-join-subnet="100.99.0.0/16"`,
 		{
 			desc: "HybridOverlay",
 			expected: `
+v4-masquerade-subnet="100.98.0.0/16"`,
+			v4InternalMasqueradeSubnet:"100.98.0.0/16",
+		},`
 [default]
 mtu="1500"
 cluster-subnets="10.128.0.0/15/23,10.0.0.0/14/24"
@@ -696,6 +700,9 @@ nodeport=true`,
 			if tc.v4InternalSubnet != "" {
 				OVNKubeConfig.Spec.DefaultNetwork.OVNKubernetesConfig.V4InternalSubnet = tc.v4InternalSubnet
 			}
+			if tc.v4InternalMasqueradeSubnet != "" {
+				OVNKubeConfig.Spec.DefaultNetwork.OVNKubernetesConfig.V4InternalMasqueradeSubnet = tc.v4InternalMasqueradeSubnet
+			}
 
 			OVNKubeConfig.Spec.DisableMultiNetwork = &tc.disableMultiNet
 			OVNKubeConfig.Spec.UseMultiNetworkPolicy = &tc.enableMultiNetPolicies
@@ -912,6 +919,19 @@ func TestValidateOVNKubernetes(t *testing.T) {
 	ovnConfig.V4InternalSubnet = "172.30.0.0/18"
 	errExpect("v4InternalSubnet overlaps with ServiceNetwork 172.30.0.0/16")
 
+	ovnConfig.V6InternalMasqueradeSubnet = "fd01::/48"
+	errExpect("v6InternalMasqueradeSubnet and ClusterNetwork must have matching IP families")
+	ovnConfig.V4InternalMasqueradeSubnet = "10.128.0.0/16"
+	errExpect("v4InternalMasqueradeSubnet overlaps with ClusterNetwork 10.128.0.0/15")
+	ovnConfig.V4InternalMasqueradeSubnet = "172.30.0.0/18"
+	errExpect("v4InternalMasqueradeSubnet overlaps with ServiceNetwork 172.30.0.0/16")
+	ovnConfig.V6InternalMasqueradeSubnet = "fd01::/64"
+	errExpect("v6InternalMasqueradeSubnet overlaps with ClusterNetwork fd01::/48")
+	ovnConfig.V6InternalMasqueradeSubnet = "fd02::/64"
+	errExpect("v6InternalMasqueradeSubnet overlaps with ServiceNetwork fd02::/112")
+
+
+
 	// set mtu to insanity
 	ovnConfig.MTU = ptrToUint32(70000)
 	errExpect("invalid MTU 70000")
@@ -925,6 +945,7 @@ func TestValidateOVNKubernetes(t *testing.T) {
 		CIDR: "fd01::/48", HostPrefix: 64,
 	}}
 	errExpect("v4InternalSubnet and ClusterNetwork must have matching IP families")
+	errExpect("v4InternalMasqueradeSubnet and ClusterNetwork must have matching IP families")
 	ovnConfig.V6InternalSubnet = "fd01::/64"
 	errExpect("v6InternalSubnet overlaps with ClusterNetwork fd01::/48")
 	ovnConfig.V6InternalSubnet = "fd03::/112"
@@ -933,6 +954,8 @@ func TestValidateOVNKubernetes(t *testing.T) {
 	errNotExpect("v6InternalSubnet is no large enough for the maximum number of nodes which can be supported by ClusterNetwork")
 	ovnConfig.V6InternalSubnet = "fd02::/64"
 	errExpect("v6InternalSubnet overlaps with ServiceNetwork fd02::/112")
+
+	
 
 	// invalid ipv6 mtu
 	ovnConfig.MTU = ptrToUint32(576)
