@@ -507,6 +507,20 @@ type GatewayConfig struct {
 	// The supported values are "Restricted" and "Global".
 	// +optional
 	IPForwarding IPForwardingMode `json:"ipForwarding,omitempty"`
+	// V4InternalMasqueradeSubnet contains the v4 masquerade addresses used internally by
+	// ovn-kubernetes to enable host to service traffic. The host is configured with these
+	// addresses, as well as the shared gateway bridge interface.The values can be changed after
+	// installation.
+	// The default subnet is 169.254.169.0/29
+	// +optional
+	V4InternalMasqueradeSubnet string `json:"v4InternalMasqueradeSubnet,omitempty"`
+	// V6InternalMasqueradeSubnet contains the v6 masquerade addresses used internally by
+	// ovn-kubernetes to enable host to service traffic. The host is configured with these
+	// addresses, as well as the shared gateway bridge interface.The values can be changed after
+	// installation.
+	// The default subnet is fd69::/125
+	// +optional
+	V6InternalMasqueradeSubnet string `json:"v6InternalMasqueradeSubnet,omitempty"`
 }
 
 type ExportNetworkFlows struct {
